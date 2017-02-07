@@ -1,5 +1,4 @@
 #-*- coding: UTF-8 -*-
-# import re
 
 """
 This module contains 2 classes:
@@ -19,47 +18,17 @@ class Node(object):
     (even accented), a hyphen (-) or an apostrophe (').
 
     """
-    def __init__(self, char, parent=None, is_word=False):
+    def __init__(self, char, parent, is_word=False):
         self.char = char
         self.parent = parent
         self.is_word = is_word
-        self._children = []
-        self.description = "" # is the empty string for all nodes whose is_word is False ; otherwise is either the empty string or not
-
-    def get_char(self):
-        """Return the value of the current node's char attribute."""
-        return self.char
-
-    def set_char(self, char):
-        """Set the value of the current node's char attribute."""
-        self.char = char
-
-    def get_is_word(self):
-        """Return a boolean value."""
-        return self.is_word
-
-    def set_is_word(self, bool):
-        """Set the is_word attribute to True or False."""
-        self.is_word = bool
-
-    def get_parent(self):
-        """Return a Node instance which is the preceding character of the word."""
-        return self.parent
-
-    @property
-    def children(self):
-        """Return a list of Node instances which can be empty."""
-        return self._children
+        self.children = []
+        # description is bound to the last character of a word only (assuming the word has a description)
+        self.description = ""
 
     def add_child(self, child):
         """Add a Node instance to the current node's children."""
         self.children.append(child)
-
-    def get_description(self):
-        return self.description
-
-    def set_description(self, description):
-        self.description = description
 
     def get_last(self):
         """Return the list of all descendants whose is_word attribute is True."""
@@ -70,6 +39,7 @@ class Node(object):
                 last_letters.extend(child.get_last())
         return last_letters
 
+
 class Trie(object):
     """A trie contains several words made of Node instances.
     After a word has been removed from the tree, useless nodes may remain in the
@@ -77,7 +47,7 @@ class Trie(object):
     later when adding new words.
     """
     def __init__(self, root):
-        self.root = Node(None, parent=None, is_word=False) # the root node has None as a char value
+        self.root = Node(None, None) # the root node has None as a char value and as a parent
 
     def get_trie_size(self):
         """Return the number of words in the trie (an integer)."""
@@ -119,24 +89,24 @@ class Trie(object):
             while len(word) > 0:
                 if len(word) == 1: # last loop
                     if len(current_node.children) == 0:
-                        new_child = Node(word, parent=current_node, is_word=True)
+                        new_child = Node(word, current_node, is_word=True)
                         current_node.add_child(new_child)
                         return True # word inserted
-                    else:# if the current node has got at least one child
+                    else: # if the current node has got at least one child
                         for child in current_node.children:
                             if child.char == word and child.is_word:
-                                return False# cannot insert word which is already in the tree
+                                return False # cannot insert word which is already in the tree
                             elif child.char == word and not child.is_word:
-                                child.set_is_word(True)
+                                child.is_word = True
                                 return True # word inserted
-                        # if the current node doesn't have a child whose char value equals word, then:
-                        new_child = Node(word, parent=current_node, is_word=True)
+                        # if the current node doesn't have a child whose char value equals word
+                        new_child = Node(word, current_node, is_word=True)
                         current_node.add_child(new_child)
                         return True # word inserted
 
                 else: # if the word has more than 1 character, we insert the 1st character
                     if len(current_node.children) == 0:
-                        new_child = Node(word[0], parent=current_node)
+                        new_child = Node(word[0], current_node)
                         current_node.add_child(new_child)
                         current_node = new_child
                         word = word[1:] # we make another loop after deleting the 1st letter that's just been inserted (=new_node)
@@ -146,7 +116,7 @@ class Trie(object):
                             if child.char == word[0]:
                                 identical.append(child)
                         if len(identical) == 0:
-                            new_child = Node(word[0], parent=current_node)
+                            new_child = Node(word[0], current_node)
                             current_node.add_child(new_child)
                             current_node = new_child
                             word = word[1:]
@@ -160,8 +130,9 @@ class Trie(object):
         """Return True if the word could be removed, return False otherwise."""
         last_node = self.find_word(word)
         if last_node:
-            last_node.set_is_word(False)
-            last_node.description = "" # in case there was a description, delete it
+            last_node.is_word = False
+            # in case there was a description, delete it
+            last_node.description = ""
             return True # word deleted
         else: return False # a word that's not in the tree cannot be removed
 
@@ -178,25 +149,28 @@ class Trie(object):
         for last in my_list: # for each ending letter, get the whole word by going up to the root node of the Tree
             current_node = last
             word = ""
-            while current_node.char != None:# as long as we haven't reached the root node
+            while current_node.char != None: # as long as we haven't reached the root node
                 word += current_node.char
                 current_node = current_node.parent
-            word = word[::-1]#putting the letters into order
+            word = word[::-1] # putting the letters into order
             words.append(word)
         words.sort()
         return words
 
     def set_description(self, word, description):
-        """Return True if the description of a word could be added."""
+        """Return True if the description of a word could be added.
+        The following punctuation signs and special characters are accepted in
+        the description:
+        , ' . : ; \ - as well as white spaces and numbers."""
         if description.replace(" ", "").replace(",", "").replace("'", "").\
         replace(".", "").replace(":", "").replace(";", "").replace("\\", "").\
-        decode('utf8').isalnum() or description == "":
+        replace("-", "").decode('utf8').isalnum() or description == "":
             last_node = self.find_word(word)
             try:
                 last_node.description = description
                 return True
             except: return None # the word isn't in the tree
-        else: return False # the description must be alphanumeric characters (":", ";", "'", "-", ".", "," and " " are also accepted)
+        else: return False # the description contains unauthorized characters
 
     def get_description(self, word):
         """Return the description of a word, None if it has no description, or

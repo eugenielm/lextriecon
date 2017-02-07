@@ -4,31 +4,12 @@ from lextriecon import Trie, Node
 
 class NodeTest(unittest.TestCase):
     def setUp(self):
-        self.root_node = Node(None, parent=None, is_word=False)
-        self.child = Node('e', parent=self.root_node, is_word=False)
-        self.gdchild = Node('t', parent=self.child, is_word=True)
-        self.gdchild2 = Node('n', parent=self.child, is_word=False)
-        self.gdgdchild = Node('a', parent=self.gdchild, is_word=False)
-        self.gdgdgdchild = Node('l', parent=self.gdgdchild, is_word=True)
-
-    def test_get_char(self):
-        """Checks if it returns the node's char attribute value"""
-        self.assertIs(type(self.child.char), str)
-        self.assertIs(len(self.child.char), 1)
-
-    def test_set_char(self):
-        """Checks if the new node's char attribute is set correctly"""
-        self.assertIs(self.child.char, 'e')
-        self.child.set_char('a')
-        self.assertIs(self.child.char, 'a')
-
-    def test_get_children(self):
-        """Checks if it returns a list of Node instances"""
-        self.assertIs(type(self.child.children), list)
-        self.assertIs(len(self.child.children), 0)
-        self.child.add_child(self.gdchild)
-        self.assertIs(len(self.child.children), 1)
-        self.assertIsInstance(self.child.children[0], Node)
+        self.root_node = Node(None, None)
+        self.child = Node('e', self.root_node)
+        self.gdchild = Node('t', self.child, is_word=True)
+        self.gdchild2 = Node('n', self.child)
+        self.gdgdchild = Node('a', self.gdchild)
+        self.gdgdgdchild = Node('l', self.gdgdchild, is_word=True)
 
     def test_add_child(self):
         """Checks if it appends a child to a Node's children attribute"""
@@ -36,21 +17,6 @@ class NodeTest(unittest.TestCase):
         self.child.add_child(self.gdchild)
         self.assertIs(len(self.child.children), 1)
         self.assertIs(self.child.children[0], self.gdchild)
-
-    def test_get_is_word(self):
-        """Checks if the correct boolean value is returned as the node's is_word attribute"""
-        self.assertFalse(self.child.is_word)
-        self.assertTrue(self.gdchild.is_word)
-
-    def test_set_is_word(self):
-        """Checks if the node's is_word attribute is set correctly"""
-        self.assertFalse(self.child.is_word)
-        self.child.is_word = True
-        self.assertTrue(self.child.is_word)
-
-    def test_get_parent(self):
-        """Checks it returns a Node instance"""
-        self.assertIsInstance(self.gdchild.parent, Node)
 
     def test_get_last(self):
         """Checks if it returns a list of Node instances whose is_word attribute
@@ -65,10 +31,11 @@ class NodeTest(unittest.TestCase):
         self.assertIs(len(self.child.get_last()), 2)
         self.assertIsInstance(self.gdchild.get_last()[0], Node)
 
+
 class TrieTest(unittest.TestCase):
     def setUp(self):
-        self.root_node = Node(None, parent=None, is_word=False)
-        self.test_trie = Trie(root=self.root_node)
+        self.root_node = Node(None, None)
+        self.test_trie = Trie(self.root_node)
 
     def test_insert_word(self):
         """Checks if it returns False if the word couldn't be inserted"""
