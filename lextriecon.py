@@ -1,8 +1,8 @@
 #-*- coding: UTF-8 -*-
 
 """
-This module contains 2 classes:
 
+This module contains 2 classes:
 - the Node class whose instances represent one character of a word ;
 - the Trie class whose instances are collections of words, which are
 themselves made of Node instances.
@@ -26,9 +26,26 @@ class Node(object):
         # description is bound to the last character of a word only (assuming the word has a description)
         self.description = ""
 
-    def add_child(self, child):
-        """Add a Node instance to the current node's children."""
-        self.children.append(child)
+    def get_char(self):
+        return self.char
+
+    def get_is_word(self):
+        return self.is_word
+
+    def set_is_word(self, boolean):
+        self.is_word = boolean
+
+    def get_parent(self):
+        return self.parent
+
+    def set_parent(self, new_parent):
+        self.parent = new_parent
+
+    def get_children(self):
+        return self.children
+
+    def add_child(self, new_child):
+        self.children.append(new_child)
 
     def get_last(self):
         """Return the list of all descendants whose is_word attribute is True."""
@@ -39,6 +56,12 @@ class Node(object):
                 last_letters.extend(child.get_last())
         return last_letters
 
+    def get_description(self):
+        return self.description
+
+    def set_description(self, new_descr):
+        self.description = new_descr
+
 
 class Trie(object):
     """A trie contains several words made of Node instances.
@@ -46,7 +69,8 @@ class Trie(object):
     tree, i.e nodes that aren't part of a word. These nodes may be used again
     later when adding new words.
     """
-    def __init__(self, root):
+    def __init__(self, name):
+        self.name = name
         self.root = Node(None, None) # the root node has None as a char value and as a parent
 
     def get_trie_size(self):
@@ -55,22 +79,24 @@ class Trie(object):
 
     def find_word(self, word):
         """Return False if the word couldn't be found, otherwise return its last node."""
+        if not self.root: return False
+
         word = word.lower()
         if word.replace("'", "", 2).replace("-", "").decode('utf8').isalpha():
             current_node = self.root # we start at the root node of the tree
             while len(word) > 0:
-                if len(current_node.children) == 0: # if the current node has no child
+                if len(current_node.get_children()) == 0: # if the current node has no child
                     return False
                 else: # if the current node has at least one child
                     if len(word) == 1:
-                        for child in current_node.children:
-                            if child.char == word and child.is_word:
+                        for child in current_node.get_children():
+                            if child.get_char() == word and child.get_is_word():
                                 return child # word found
                         return False
                     else: # if the word to insert has more than 1 character
                         identical = []
-                        for child in current_node.children:
-                            if child.char == word[0]:
+                        for child in current_node.get_children():
+                            if child.get_char() == word[0]:
                                 identical.append(child)
                         if len(identical) == 0: return False # word not found
                         else:
@@ -88,16 +114,16 @@ class Trie(object):
             current_node = self.root # we start at the root node
             while len(word) > 0:
                 if len(word) == 1: # last loop
-                    if len(current_node.children) == 0:
+                    if len(current_node.get_children()) == 0:
                         new_child = Node(word, current_node, is_word=True)
                         current_node.add_child(new_child)
                         return True # word inserted
                     else: # if the current node has got at least one child
-                        for child in current_node.children:
-                            if child.char == word and child.is_word:
+                        for child in current_node.get_children():
+                            if child.get_char() == word and child.get_is_word():
                                 return False # cannot insert word which is already in the tree
-                            elif child.char == word and not child.is_word:
-                                child.is_word = True
+                            elif child.get_char() == word and not child.get_is_word():
+                                child.set_is_word(True)
                                 return True # word inserted
                         # if the current node doesn't have a child whose char value equals word
                         new_child = Node(word, current_node, is_word=True)
@@ -105,15 +131,15 @@ class Trie(object):
                         return True # word inserted
 
                 else: # if the word has more than 1 character, we insert the 1st character
-                    if len(current_node.children) == 0:
+                    if len(current_node.get_children()) == 0:
                         new_child = Node(word[0], current_node)
                         current_node.add_child(new_child)
                         current_node = new_child
                         word = word[1:] # we make another loop after deleting the 1st letter that's just been inserted (=new_node)
                     else:
                         identical = []
-                        for child in current_node.children:
-                            if child.char == word[0]:
+                        for child in current_node.get_children():
+                            if child.get_char() == word[0]:
                                 identical.append(child)
                         if len(identical) == 0:
                             new_child = Node(word[0], current_node)
@@ -130,7 +156,7 @@ class Trie(object):
         """Return True if the word could be removed, return False otherwise."""
         last_node = self.find_word(word)
         if last_node:
-            last_node.is_word = False
+            last_node.set_is_word(False)
             # in case there was a description, delete it
             last_node.description = ""
             return True # word deleted
@@ -139,19 +165,19 @@ class Trie(object):
     def list_words(self):
         """Return a sorted list of all the words (strings) in the trie."""
         current_node = self.root
-        if len(current_node.children) == 0:
+        if len(current_node.get_children()) == 0:
             return []
         else: # make a list of of all ending letters (= all the nodes in the tree whose is_word value is True)
             my_list = []
-            for child in current_node.children:
+            for child in current_node.get_children():
                 my_list.extend(child.get_last())
         words = []
         for last in my_list: # for each ending letter, get the whole word by going up to the root node of the Tree
             current_node = last
             word = ""
-            while current_node.char != None: # as long as we haven't reached the root node
-                word += current_node.char
-                current_node = current_node.parent
+            while current_node.get_char() != None: # as long as we haven't reached the root node
+                word += current_node.get_char()
+                current_node = current_node.get_parent()
             word = word[::-1] # putting the letters into order
             words.append(word)
         words.sort()
@@ -167,18 +193,18 @@ class Trie(object):
         replace("-", "").decode('utf8').isalnum() or description == "":
             last_node = self.find_word(word)
             try:
-                last_node.description = description
+                last_node.set_description(description)
                 return True
-            except: return None # the word isn't in the tree
-        else: return False # the description contains unauthorized characters
+            except: return False # the word isn't in the tree
+        else: return None # the description contains unauthorized characters
 
     def get_description(self, word):
         """Return the description of a word, None if it has no description, or
         False if the word isn't in the tree."""
         last_node = self.find_word(word)
         if last_node: # if the word is in the tree
-            if len(last_node.description) == 0:
+            if not last_node.get_description():
                 return None
             else:
-                return last_node.description # a string that isn't empty
+                return last_node.get_description() # a string that isn't empty
         else: return False # the word isn't in the tree
