@@ -32,7 +32,14 @@ In order to create/modify a trie:
 
 2. Navigate to the repository
 
-3. Type the following command in the command line:
+3. Type the following command in the command line to create a new trie, 
+ie. a new lexicon:
+
+  ```sh
+  python interface.py new <trie_name>
+  ```
+
+  If you want to change an existing lexicon, type the following command:
 
   ```sh
   python interface.py <trie_name> <action> [word]

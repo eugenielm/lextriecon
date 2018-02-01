@@ -94,7 +94,7 @@ class TrieTest(unittest.TestCase):
         self.test_trie.set_description("cerf-volant", "Does it fly?")
         self.assertEqual(self.test_trie.get_description("cerf-volant"),
             "Flies high in the sky.")
-        self.assertIs(self.test_trie.set_description("cerf", "Flies high in the sky."), None)
+        self.assertIs(self.test_trie.set_description("cerf", "Flies high in the sky."), False)
         self.assertFalse(self.test_trie.set_description("cerf-volant", "Does it fly?"))
 
 
