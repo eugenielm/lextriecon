@@ -23,8 +23,8 @@ class Node(object):
         self.parent = parent
         self.is_word = is_word
         self.children = []
-        # description is bound to the last character of a word only (assuming the word has a description)
-        self.description = ""
+        # if they exist, descriptions are bound to the last character of a word only
+        self.descriptions = {}
 
     def get_char(self):
         return self.char
@@ -56,11 +56,30 @@ class Node(object):
                 last_letters.extend(child.get_last())
         return last_letters
 
-    def get_description(self):
-        return self.description
+    def get_descriptions(self):
+        return self.descriptions
 
-    def set_description(self, new_descr):
-        self.description = new_descr
+    def set_description(self, descr_name, descr_content):
+        """Return True if the description could be set - otherwise return False.
+        The following punctuation signs and special characters are accepted in
+        the description:
+        , ' . : ; \ - as well as white spaces and numbers."""
+        if descr_content.replace(" ", "").replace(",", "").replace("'", "").\
+           replace(".", "").replace(":", "").replace(";", "").replace("\\", "").\
+           replace("-", "").decode('utf8').isalnum() and descr_name.decode('utf8').isalnum():
+            self.descriptions[descr_name] = descr_content
+            return True
+        return False
+
+    def remove_description(self, descr_name):
+        try:
+            del self.descriptions[descr_name]
+            return True
+        except KeyError:
+            return False
+
+    def delete_all_descriptions(self):
+        self.descriptions = {}
 
 
 class Trie(object):
@@ -157,8 +176,8 @@ class Trie(object):
         last_node = self.find_word(word)
         if last_node:
             last_node.set_is_word(False)
-            # in case there was a description, delete it
-            last_node.description = ""
+            # in case there were descriptions, delete them
+            last_node.delete_all_descriptions()
             return True # word deleted
         else: return False # a word that's not in the tree cannot be removed
 
@@ -183,28 +202,36 @@ class Trie(object):
         words.sort()
         return words
 
-    def set_description(self, word, description):
+    def set_word_description(self, word, descr_name, descr_content):
         """Return True if the description of a word could be added.
-        The following punctuation signs and special characters are accepted in
-        the description:
-        , ' . : ; \ - as well as white spaces and numbers."""
-        if description.replace(" ", "").replace(",", "").replace("'", "").\
-        replace(".", "").replace(":", "").replace(";", "").replace("\\", "").\
-        replace("-", "").decode('utf8').isalnum() or description == "":
-            last_node = self.find_word(word)
-            try:
-                last_node.set_description(description)
-                return True
-            except: return False # the word isn't in the tree
-        else: return None # the description contains unauthorized characters
+        Return None if the word isn't in the tree, and False if the description couldn't be added.
+        """
+        last_node = self.find_word(word) # check if the word is in the tree
+        if not last_node: return None
 
-    def get_description(self, word):
-        """Return the description of a word, None if it has no description, or
+        if last_node.set_description(descr_name, descr_content):
+            return True
+        else:
+            return False # the description contains unauthorized characters
+
+    def remove_description(self, word, descr_name):
+        """Return True if the description could be removed, False otherwise."""
+        last_node = self.find_word(word)
+        if last_node and last_node.get_descriptions():
+            try:
+                last_node.remove_description(descr_name)
+                return True
+            except KeyError:
+                return False
+        return False
+
+    def get_word_descriptions(self, word):
+        """Return the descriptions of a word, None if it has no description, or
         False if the word isn't in the tree."""
         last_node = self.find_word(word)
         if last_node: # if the word is in the tree
-            if not last_node.get_description():
+            if not last_node.get_descriptions():
                 return None
             else:
-                return last_node.get_description() # a string that isn't empty
+                return last_node.get_descriptions() # a dict that isn't empty
         else: return False # the word isn't in the tree
