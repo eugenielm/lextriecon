@@ -76,26 +76,25 @@ class TrieTest(unittest.TestCase):
         self.assertEqual(self.test_trie.list_words()[0], "juju")
         self.assertLess(self.test_trie.list_words()[0], self.test_trie.list_words()[1])
 
-    def test_get_description(self):
+    def test_get_word_descriptions(self):
         """Checks if it returns None or the description of a word, or False if
         the word isn't in the tree."""
         self.test_trie.insert_word("cerf-volant")
-        self.assertFalse(self.test_trie.get_description("cerf"))
-        self.assertIs(self.test_trie.get_description("cerf-volant"), None)
-        self.test_trie.set_description("cerf-volant", "Flies high in the sky.")
-        self.assertEqual(self.test_trie.get_description("cerf-volant"),
+        self.assertFalse(self.test_trie.get_word_descriptions("cerf"))
+        self.assertIs(self.test_trie.get_word_descriptions("cerf-volant"), None)
+        self.test_trie.set_word_description("cerf-volant", "game", "Flies high in the sky.")
+        self.assertEqual(self.test_trie.get_word_descriptions("cerf-volant")["game"],
             "Flies high in the sky.")
 
     def test_set_description(self):
         """Checks if it sets the description of a word."""
         self.test_trie.insert_word("cerf-volant")
-        self.assertIs(self.test_trie.get_description("cerf-volant"), None)
-        self.test_trie.set_description("cerf-volant", "Flies high in the sky.")
-        self.test_trie.set_description("cerf-volant", "Does it fly?")
-        self.assertEqual(self.test_trie.get_description("cerf-volant"),
-            "Flies high in the sky.")
-        self.assertIs(self.test_trie.set_description("cerf", "Flies high in the sky."), False)
-        self.assertFalse(self.test_trie.set_description("cerf-volant", "Does it fly?"))
+        self.assertIs(self.test_trie.get_word_descriptions("cerf-volant"), None)
+        self.test_trie.set_word_description("cerf-volant", "affirmation", "Flies high in the sky.")
+        self.test_trie.set_word_description("cerf-volant", "second", "-does it fly-")
+        self.assertEqual(self.test_trie.get_word_descriptions("cerf-volant"),
+            {"affirmation": "Flies high in the sky.", "second": "-does it fly-"})
+        self.assertFalse(self.test_trie.set_word_description("cerf-volant", "other", "Does it fly?"))
 
 
 if __name__ == '__main__':
