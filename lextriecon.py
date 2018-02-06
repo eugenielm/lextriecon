@@ -66,7 +66,8 @@ class Node(object):
         , ' . : ; \ - as well as white spaces and numbers."""
         if descr_content.replace(" ", "").replace(",", "").replace("'", "").\
            replace(".", "").replace(":", "").replace(";", "").replace("\\", "").\
-           replace("-", "").decode('utf8').isalnum() and descr_name.decode('utf8').isalnum():
+           replace("-", "").decode('utf8').isalnum() and descr_name.replace("_", "").\
+           decode('utf8').isalnum() and descr_name != 'exit':
             self.descriptions[descr_name] = descr_content
             return True
         return False
@@ -90,11 +91,15 @@ class Trie(object):
     """
     def __init__(self, name):
         self.name = name
+        self.size = 0
         self.root = Node(None, None) # the root node has None as a char value and as a parent
 
     def get_trie_size(self):
         """Return the number of words in the trie (an integer)."""
-        return len(self.list_words())
+        try:
+            return self.size
+        except AttributeError:
+            return len(self.list_words())
 
     def find_word(self, word):
         """Return False if the word couldn't be found, otherwise return its last node."""
@@ -136,6 +141,7 @@ class Trie(object):
                     if len(current_node.get_children()) == 0:
                         new_child = Node(word, current_node, is_word=True)
                         current_node.add_child(new_child)
+                        self.size += 1
                         return True # word inserted
                     else: # if the current node has got at least one child
                         for child in current_node.get_children():
@@ -143,10 +149,12 @@ class Trie(object):
                                 return False # cannot insert word which is already in the tree
                             elif child.get_char() == word and not child.get_is_word():
                                 child.set_is_word(True)
+                                self.size += 1
                                 return True # word inserted
                         # if the current node doesn't have a child whose char value equals word
                         new_child = Node(word, current_node, is_word=True)
                         current_node.add_child(new_child)
+                        self.size += 1
                         return True # word inserted
 
                 else: # if the word has more than 1 character, we insert the 1st character
@@ -178,6 +186,7 @@ class Trie(object):
             last_node.set_is_word(False)
             # in case there were descriptions, delete them
             last_node.delete_all_descriptions()
+            self.size -= 1
             return True # word deleted
         else: return False # a word that's not in the tree cannot be removed
 
@@ -214,7 +223,7 @@ class Trie(object):
         else:
             return False # the description contains unauthorized characters
 
-    def remove_description(self, word, descr_name):
+    def remove_word_description(self, word, descr_name):
         """Return True if the description could be removed, False otherwise."""
         last_node = self.find_word(word)
         if last_node and last_node.get_descriptions():
@@ -235,3 +244,22 @@ class Trie(object):
             else:
                 return last_node.get_descriptions() # a dict that isn't empty
         else: return False # the word isn't in the tree
+
+    def __contains__(self, word):
+        if self.find_word(word):
+            return True
+        else: return False
+
+    def __len__(self):
+        try:
+            return self.size
+        except AttributeError:
+            return len(self.list_words())
+
+    def __getitem__(self, word):
+        present = self.find_word(word)
+        if present:
+            return present.get_descriptions()
+        else:
+            return None
+
