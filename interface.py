@@ -46,8 +46,8 @@ if go_on:
 
 
         if args[1] == 'list':
-            words = my_lex.list_words()
-            if words:
+            if len(my_lex) > 0:
+                words = my_lex.list_words()
                 print '%s contains the following word(s):' % args[0]
                 for word in words:
                     print "-", word
@@ -56,15 +56,16 @@ if go_on:
 
 
         elif args[1] == 'size':
-            lex_size = my_lex.get_trie_size()
-            if lex_size > 0:
-                print "'%s' contains %i word(s)." % (args[0], lex_size)
+            if len(my_lex) > 1:
+                print "'%s' contains %i words." % (args[0], len(my_lex))
+            elif len(my_lex) == 1:
+                print "'%s' contains 1 word." % args[0]
             else:
                 print "'%s' is empty." % args[0]
 
 
         elif args[1] == 'find':
-            if my_lex.find_word(args[2]):
+            if args[2] in my_lex:
                 print "%s is already in this lexicon." % args[2].lower()
             else:
                 print "%s isn't in this lexicon." % args[2].lower()
@@ -85,56 +86,59 @@ if go_on:
                 confirmation = raw_input("Are you sure you want to delete '%s'? Y/N: " % args[2])
                 if confirmation.upper() == 'Y' or confirmation.upper() == 'YES':
                     my_lex.remove_word(args[2])
-                    print "Word successfully removed from this lexicon."
+                    print "'%s' successfully removed from this lexicon." % args[2]
                 else:
-                    print "Deletion of '%s' cancelled." % args[2]
+                    print "Deletion of '%s' was cancelled." % args[2]
             else:
-                print "The word couldn't be removed because it's not in this lexicon."
+                print "'%s' couldn't be removed because it's not in this lexicon." % args[2]
 
 
         elif args[1] == 'description':
-            res = my_lex.get_word_descriptions(args[2])
-            if res:
-                print "Description(s) of %s:" % args[2]
-                for name, content in res.items():
+            if args[2] not in my_lex:
+                print "'%s' isn't in %s." % (args[2], args[0])
+            elif my_lex[args[2]]:
+                print "Description(s) of '%s':" % args[2]
+                for name, content in my_lex[args[2]].items():
                     print "- %s: %s" % (name, content)
-            elif res is None:
-                print "There's no description in this lexicon for %s." % args[2]
             else:
-                print "The word '%s' isn't in this lexicon." % args[2]
+                print "There's no description in this lexicon for '%s'." % args[2]
 
 
         elif args[1] == 'update_descriptions':
-            word = my_lex.find_word(args[2])
-            if not word:
+            if args[2] not in my_lex:
                 print "'%s' isn't in this lexicon." % args[2]
             else:
-                if word.get_descriptions():
-                    print "Here are the descriptions for %s: %s." % \
-                    (args[2], ", ".join(["'%s'" % d for d in word.get_descriptions().keys()]))
+                choice = "0"
+                if my_lex[args[2]]:
+                    print "Here are the descriptions for '%s': %s." % \
+                    (args[2], ", ".join(["'%s'" % d for d in my_lex[args[2]]]))
                     print
                 else:
-                    print "This word has no description at the moment."
+                    print "'%s' has no description at the moment." % args[2]
+                    choice = "1"
                     print
                 
-                choice = "0"
-                while not (choice == "1" or choice == "2"):
-                    choice = raw_input("Do you want to add/update(1) a description or delete(2) a description? -> ")
+                while not (choice == "1" or choice == "2" or choice == 'exit' or choice == 'EXIT'):
+                    choice = raw_input("Do you want to 1- add/update a description or 2- delete a description?"+\
+                    "\n(otherwise type in 'exit')\n-> ")
 
-                if choice == "1":
+                if choice == 'exit':
+                    print
+
+                elif choice == "1":
                     descr_name = None
-                    while not descr_name or not descr_name.isalnum():
-                        descr_name = raw_input("Please type in the name of the description "\
-                        "you want to update/add (alphanumeric char only):\n")
+                    while not descr_name or not descr_name.replace("_", "").decode('utf8').isalnum():
+                        descr_name = raw_input("Please type in the name of the description "+\
+                        "you want to add or update (alphanumeric chars and underscores only):\n")
                 
                     res = False
 
                     while not res:
                     
-                        if not word.get_descriptions() or \
-                        (word.get_descriptions() and descr_name not in word.get_descriptions().keys()):
+                        if not my_lex[args[2]] or \
+                        (my_lex[args[2]] and descr_name not in my_lex[args[2]]):
                             descr_content = raw_input("Enter your description below:\n")
-                            res = word.set_description(descr_name, descr_content)
+                            res = my_lex.set_word_description(args[2], descr_name, descr_content)
                             if res:
                                 print
                                 print "'%s''s description successfully added." % args[2]
@@ -143,14 +147,15 @@ if go_on:
                                 print "The description couldn't be added because you used unauthorized characters."
 
                         else:
-                            existing = word.get_descriptions()[descr_name]
+                            existing = my_lex[args[2]][descr_name]
+                            print
                             print "The existing description is the following one:"
                             print "%s: %s" % (descr_name, existing)
                             print
                             answer = raw_input("Are you sure you want to change this description? Y/N: ")
                             if answer.upper() == 'Y' or answer.upper() == 'Y':
                                 new_content = raw_input('Please type in the new content of your description:\n')
-                                res = word.set_description(descr_name, new_content)
+                                res = my_lex.set_word_description(args[2], descr_name, new_content)
                                 if res:
                                     print
                                     print "'%s''s description successfully updated." % args[2]
@@ -158,15 +163,20 @@ if go_on:
                                     print
                                     print "The description couldn't be updated because you used unauthorized characters."
                             else:
-                                print "Update canceled."
+                                print
                                 break
 
                 else:
-                    descr_name = False
-                    while descr_name not in word.get_descriptions().keys():
-                        descr_name = raw_input('Please type in the name of the description you want to delete (enter CTR+C to escape):\n')
-                    word.remove_description(descr_name)
-                    print "Description successfully deleted."
+                    descr_name = raw_input("Please type in the name of the description you want to delete "+\
+                    "(Nota Bene: description names are case sensitive).\nType 'exit' to quit:\n")
+                    print
+                    if descr_name == 'exit':
+                        print "Deletion cancelled."
+                    elif descr_name in my_lex[args[2]]:
+                        my_lex.remove_word_description(args[2], descr_name)
+                        print "Description successfully deleted."
+                    else:
+                        print "Cannot delete a description that's not here..."
 
 
         elif args[1] == 'empty':
