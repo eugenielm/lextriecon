@@ -57,8 +57,8 @@ The available actions are:
   - `find`: say if a word is in the trie or not
   - `add`: add a word in the trie
   - `remove`: remove a word from the trie
-  - `description`: display a word's description
-  - `set_description`: set a word's description
+  - `description`: display a word's descriptions
+  - `update_descriptions`: add/update/delete a word's descriptions
 
 
 NB: You are allowed to add a [word] containing:
