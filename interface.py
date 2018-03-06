@@ -9,13 +9,15 @@ def check_input(args):
     This doesn't check if the [word] entered -if needed- contains only authorized
     characters"""
     actions = ['list', 'empty', 'size', 'add', 'remove', 'description', 'update_descriptions', 'find']
+
+    if len(args) < 3:
+        return False
+
     if args[0] == 'new' and len(args) == 2 and args[1].isalnum():
         return True
-    if args[1] not in actions:
-        return False
-    elif args[1] in actions[:3] and len(args) != 2:
-        return False
-    elif args[1] in actions[3:] and len(args) != 3:
+
+    if (args[1] not in actions) or (args[1] in actions[:3] and len(args) != 2) \
+        or (args[1] in actions[3:] and len(args) != 3):
         return False
     else: return True
 
